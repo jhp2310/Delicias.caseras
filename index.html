@@ -1,0 +1,250 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicias Caseras - Menú Completo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .product-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .product-card:hover { transform: translateY(-5px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900">
+
+    <div id="app"></div>
+
+    <script>
+        // CONFIGURACIÓN DE CONTACTOS
+        const NUMERO_1 = "16107140612";
+        const NUMERO_2 = "13212951424";
+
+        // BASE DE DATOS COMPLETA
+        const PRODUCTOS = [
+            { id: 1, nombre: "Cheese Dog Individual", precio: 2.50, cat: "Cheese Dogs", desc: "Salchicha y queso en masa crujiente artesanal.", img: "https://files.oaiusercontent.com/file-ee10af86-6295-4fbf-884e-9fc13467d68b" },
+            { id: 2, nombre: "Docena de Cheese Dogs", precio: 25.00, cat: "Cheese Dogs", desc: "¡Combo de 12 unidades! Ideal para compartir.", destacado: true, img: "https://files.oaiusercontent.com/file-ee10af86-6295-4fbf-884e-9fc13467d68b" },
+            { id: 3, nombre: "Pasteles de Cerdo (Yunta)", precio: 5.00, cat: "Pasteles", desc: "Masa de viandas envuelta en hoja de plátano.", img: "https://files.oaiusercontent.com/file-df98c0ce-bd1a-4b26-91f1-4638059cf85a" },
+            { id: 4, nombre: "Docena de Pasteles (Cerdo)", precio: 40.00, cat: "Pasteles", desc: "12 unidades de cerdo al mejor precio.", destacado: true, img: "https://files.oaiusercontent.com/file-df98c0ce-bd1a-4b26-91f1-4638059cf85a" },
+            { id: 5, nombre: "Empanadilla de Carne", precio: 3.00, cat: "Empanadillas", desc: "Relleno de carne molida sazonada.", img: "https://files.oaiusercontent.com/file-c722fbb8-f1e0-47e4-92f4-2b0deb0fbbe8" },
+            { id: 6, nombre: "Docena de Empanadillas", precio: 30.00, cat: "Empanadillas", desc: "Elige tus sabores favoritos por docena.", destacado: true, img: "https://files.oaiusercontent.com/file-c722fbb8-f1e0-47e4-92f4-2b0deb0fbbe8" },
+            { id: 7, nombre: "Polvorón KETO Individual", precio: 3.00, cat: "Repostería", desc: "Galleta artesanal sin azúcar. KETO Friendly.", alerta: "Almendra, Huevo, Leche", img: "https://files.oaiusercontent.com/file-cb5294cf-4887-4567-8c58-d3676b413860" },
+            { id: 8, nombre: "Paquete Polvorones (12u)", precio: 18.00, cat: "Repostería", desc: "12 unidades para disfrutar sin culpa.", destacado: true, img: "https://files.oaiusercontent.com/file-cb5294cf-4887-4567-8c58-d3676b413860" },
+            { id: 9, nombre: "Sofrito Casero (32oz)", precio: 8.00, cat: "Sazonadores", desc: "El toque mágico natural para tu cocina.", img: "https://files.oaiusercontent.com/file-123e841d-bd93-48d4-b786-05355916d215" }
+        ];
+
+        let carrito = [];
+        let vistaActual = 'tienda';
+
+        function render() {
+            const app = document.getElementById('app');
+            if (vistaActual === 'tienda') app.innerHTML = renderTienda();
+            else app.innerHTML = renderCheckout();
+            lucide.createIcons();
+        }
+
+        function renderTienda() {
+            const categorias = ["Cheese Dogs", "Pasteles", "Empanadillas", "Repostería", "Sazonadores"];
+            let html = `
+                <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b px-6 py-4 flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-orange-600 p-2 rounded-xl text-white shadow-lg shadow-orange-100"><i data-lucide="utensils-crosses" size="20"></i></div>
+                        <span class="text-xl font-black text-stone-900 tracking-tighter uppercase">Delicias Caseras</span>
+                    </div>
+                    <button onclick="toggleCart()" class="relative p-3 bg-stone-100 rounded-2xl hover:bg-orange-50 transition-colors">
+                        <i data-lucide="shopping-cart" class="text-stone-700"></i>
+                        ${carrito.length > 0 ? `<span class="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white animate-bounce">${carrito.reduce((s, i) => s + i.cant, 0)}</span>` : ''}
+                    </button>
+                </nav>
+                <main class="max-w-6xl mx-auto px-4 py-12">
+                    <div class="text-center mb-16">
+                        <h1 class="text-5xl font-black text-stone-900 mb-4 tracking-tighter">Antojos <span class="text-orange-600 underline decoration-orange-200">Artesanales</span></h1>
+                        <p class="text-stone-400 text-lg font-medium">Calidad casera directamente a tu WhatsApp.</p>
+                    </div>
+            `;
+
+            categorias.forEach(cat => {
+                const prodsCat = PRODUCTOS.filter(p => p.cat === cat);
+                if(prodsCat.length > 0) {
+                    html += `
+                        <div class="mb-16">
+                            <h2 class="text-3xl font-black mb-8 uppercase tracking-tight text-stone-800 flex items-center gap-4">
+                                ${cat} <div class="h-1 flex-1 bg-orange-100 rounded-full"></div>
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                ${prodsCat.map(p => `
+                                    <div class="product-card bg-white rounded-[2.5rem] overflow-hidden border border-stone-200 shadow-sm flex flex-col hover:shadow-xl">
+                                        <div class="h-56 overflow-hidden relative bg-stone-100">
+                                            <img src="${p.img}" class="w-full h-full object-cover" alt="${p.nombre}">
+                                            ${p.destacado ? `<div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">OFERTA</div>` : ''}
+                                        </div>
+                                        <div class="p-8 flex-1 flex flex-col">
+                                            <h3 class="text-xl font-extrabold mb-2 leading-tight">${p.nombre}</h3>
+                                            <p class="text-stone-500 text-sm mb-6 flex-1">${p.desc}</p>
+                                            ${p.alerta ? `<div class="text-[9px] font-black text-amber-700 bg-amber-50 p-2 rounded-lg mb-4 border border-amber-100">⚠️ ${p.alerta}</div>` : ''}
+                                            <div class="flex items-center justify-between mt-4">
+                                                <span class="text-3xl font-black text-orange-600 tracking-tighter">$${p.precio.toFixed(2)}</span>
+                                                <button onclick="agregar(${p.id})" class="bg-stone-900 text-white p-4 rounded-2xl hover:bg-orange-600 transition-all active:scale-95 shadow-lg">
+                                                    <i data-lucide="plus" size="20"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            html += `</main>${renderCarritoLateral()}`;
+            return html;
+        }
+
+        function renderCarritoLateral() {
+            const total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+            return `
+                <div id="cart-sidebar" class="fixed inset-0 z-50 hidden">
+                    <div class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onclick="toggleCart()"></div>
+                    <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-8 flex flex-col shadow-2xl">
+                        <div class="flex justify-between items-center mb-10">
+                            <h2 class="text-3xl font-black tracking-tighter">Mi <span class="text-orange-600">Orden</span></h2>
+                            <button onclick="toggleCart()" class="p-2 bg-stone-100 rounded-full hover:bg-orange-100 transition-colors"><i data-lucide="x"></i></button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto space-y-6 hide-scrollbar">
+                            ${carrito.length === 0 ? `
+                                <div class="text-center py-20 opacity-30">
+                                    <i data-lucide="shopping-bag" size="48" class="mx-auto mb-4"></i>
+                                    <p class="font-black text-xs uppercase">El carrito está vacío</p>
+                                </div>` : 
+                                carrito.map(i => `
+                                    <div class="flex gap-4 items-center">
+                                        <img src="${i.img}" class="w-16 h-16 rounded-2xl object-cover bg-stone-100 border border-stone-100">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-sm leading-tight">${i.nombre}</h4>
+                                            <p class="text-orange-600 font-black">$${(i.precio * i.cant).toFixed(2)}</p>
+                                        </div>
+                                        <div class="flex items-center gap-3 bg-stone-100 p-2 rounded-xl">
+                                            <button onclick="cambiarCant(${i.id}, -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg hover:text-orange-600 transition-colors"><i data-lucide="minus" size="14"></i></button>
+                                            <span class="font-black text-sm w-4 text-center">${i.cant}</span>
+                                            <button onclick="cambiarCant(${i.id}, 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg hover:text-orange-600 transition-colors"><i data-lucide="plus" size="14"></i></button>
+                                        </div>
+                                    </div>
+                                `).join('')
+                            }
+                        </div>
+                        ${carrito.length > 0 ? `
+                            <div class="pt-8 border-t border-stone-100 mt-8">
+                                <div class="flex justify-between items-end mb-8">
+                                    <span class="text-stone-400 font-bold text-[10px] uppercase tracking-widest italic">Total Estimado</span>
+                                    <span class="text-4xl font-black tracking-tighter text-stone-900">$${total.toFixed(2)}</span>
+                                </div>
+                                <button onclick="irACheckout()" class="w-full bg-stone-900 text-white py-6 rounded-3xl font-black text-xl shadow-xl hover:bg-orange-600 transition-all active:scale-95 shadow-stone-100">Siguiente Paso</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCheckout() {
+            const total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+            return `
+                <div class="max-w-lg mx-auto px-6 py-16">
+                    <button onclick="volverTienda()" class="mb-10 flex items-center gap-2 text-stone-400 font-black text-xs uppercase tracking-widest hover:text-orange-600 transition-all"><i data-lucide="arrow-left" size="16"></i> Regresar al Menú</button>
+                    <div class="bg-white rounded-[3rem] p-10 shadow-2xl border border-stone-50">
+                        <h2 class="text-4xl font-black mb-10 text-center tracking-tighter">Finalizar <span class="text-orange-600 underline decoration-orange-200">Pedido</span></h2>
+                        <div class="space-y-6 mb-10">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-3 ml-4">Nombre y Apellido (Obligatorio)</label>
+                                <input id="form-nombre" type="text" placeholder="Ej. Juan Pérez" class="w-full p-5 bg-stone-50 rounded-[1.5rem] border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg shadow-inner">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-3 ml-4">Notas Especiales (Instrucciones)</label>
+                                <textarea id="form-notas" placeholder="Ej. 6 de carne y 6 de pollo..." class="w-full p-5 bg-stone-50 rounded-[1.5rem] border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg h-32 resize-none shadow-inner"></textarea>
+                            </div>
+                        </div>
+                        <div class="bg-stone-900 text-white p-8 rounded-[2rem] mb-10 flex justify-between items-center">
+                            <span class="font-bold opacity-70 uppercase text-[10px] tracking-widest font-black">Subtotal:</span>
+                            <span class="text-4xl font-black tracking-tighter">$${total.toFixed(2)}</span>
+                        </div>
+                        <p class="text-[10px] text-center text-stone-400 font-bold uppercase mb-6 px-4">
+                            Al confirmar, se abrirá WhatsApp para que nos envíes tu selección.
+                        </p>
+                        <button onclick="enviarWhatsApp()" class="w-full bg-green-600 text-white py-6 rounded-3xl font-black text-xl flex items-center justify-center gap-4 shadow-xl hover:bg-green-700 transition-all active:scale-95 shadow-green-100">
+                            <i data-lucide="send"></i> Enviar a WhatsApp
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function agregar(id) {
+            const prod = PRODUCTOS.find(p => p.id === id);
+            const enCarrito = carrito.find(i => i.id === id);
+            if (enCarrito) enCarrito.cant++;
+            else carrito.push({ ...prod, cant: 1 });
+            render();
+            toggleCart(true);
+        }
+
+        function cambiarCant(id, delta) {
+            const item = carrito.find(i => i.id === id);
+            item.cant += delta;
+            if (item.cant <= 0) carrito = carrito.filter(i => i.id !== id);
+            render();
+            toggleCart(true);
+        }
+
+        function toggleCart(show = null) {
+            const sidebar = document.getElementById('cart-sidebar');
+            if (show === true) sidebar.classList.remove('hidden');
+            else if (show === false) sidebar.classList.add('hidden');
+            else sidebar.classList.toggle('hidden');
+        }
+
+        function irACheckout() { vistaActual = 'checkout'; render(); }
+        function volverTienda() { vistaActual = 'tienda'; render(); }
+
+        function enviarWhatsApp() {
+            const nombre = document.getElementById('form-nombre').value.trim();
+            const notas = document.getElementById('form-notas').value;
+            
+            const palabras = nombre.split(/\s+/);
+            if (palabras.length < 2 || palabras[1].length < 1) {
+                alert("Es OBLIGATORIO ingresar tu Nombre y Apellido para poder procesar el pedido.");
+                document.getElementById('form-nombre').focus();
+                return;
+            }
+
+            let msg = `*🛒 NUEVO PEDIDO - DELICIAS CASERAS*\n\n`;
+            msg += `*CLIENTE:* ${nombre.toUpperCase()}\n`;
+            msg += `----------------------------\n`;
+            carrito.forEach(i => { msg += `✅ ${i.cant}x ${i.nombre} - $${(i.precio * i.cant).toFixed(2)}\n`; });
+            const total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+            msg += `----------------------------\n`;
+            msg += `*TOTAL A PAGAR: $${total.toFixed(2)}*\n\n`;
+            if (notas) msg += `*NOTAS:* ${notas}`;
+
+            // Abrir primero el principal
+            window.open(`https://wa.me/${NUMERO_1}?text=${encodeURIComponent(msg)}`, '_blank');
+            
+            // Preguntar para el segundo después de un momento
+            setTimeout(() => {
+                if(confirm("¿Deseas enviar el pedido también al segundo número de contacto para mayor seguridad?")) {
+                    window.open(`https://wa.me/${NUMERO_2}?text=${encodeURIComponent(msg)}`, '_blank');
+                }
+            }, 1500);
+        }
+
+        render();
+    </script>
+</body>
+</html>
+
+```
